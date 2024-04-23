@@ -1,0 +1,8 @@
+[Unit]
+Description=RSSBot
+
+[Service]
+ExecStart=/home/dim5x/rss_bot/run.sh
+
+[Install]
+WantedBy=multi-user.target
