@@ -32,4 +32,4 @@ tinysegmenter==0.3
 tldextract==5.1.2
 tqdm==4.66.2
 urllib3==2.2.1
-Werkzeug==3.0.2
+Werkzeug==3.0.3
