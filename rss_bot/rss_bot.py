@@ -3,7 +3,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import time
 from threading import Thread
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ElemTree
 
 from flask import Flask
 from newspaper import Article
@@ -14,13 +14,12 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Create a rotating file handler
-handler = RotatingFileHandler('error.log', maxBytes=100000, backupCount=2, encoding='utf-8')  # 100000 bytes = 100 KB
+handler = RotatingFileHandler('../error.log', maxBytes=100000, backupCount=2, encoding='utf-8')  # 100000 bytes = 100 KB
 formatter = logging.Formatter('%(asctime)s \t %(name)s \t %(levelname)s \t %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
 handler.setFormatter(formatter)
 
 # Add the handler to the root logger
 logger.addHandler(handler)
-
 
 
 def sim(a: str, b: str) -> float:
@@ -84,6 +83,7 @@ def parse_lenta_rss() -> None:
     """
     Function to parse the RSS feed from Lenta.ru
     """
+    start = time.time()
     while True:
         url = 'https://lenta.ru/rss'
         # Connect
@@ -92,7 +92,7 @@ def parse_lenta_rss() -> None:
             logging.info('Connected to Lenta!')
             if response.status_code != 200:
                 raise Exception('Something went wrong with request to Lenta!')
-            with open('lenta.xml', 'wb') as file:
+            with open('../lenta.xml', 'wb') as file:
                 file.write(response.content)
         except Exception as e:
             print(e)
@@ -100,7 +100,7 @@ def parse_lenta_rss() -> None:
             time.sleep(60 * 60)
             continue
 
-        tree = ET.parse('lenta.xml')  # Parse the XML file
+        tree = ElemTree.parse('../lenta.xml')  # Parse the XML file
         root = tree.getroot()  # Get the root of the XML tree
 
         # Parse
@@ -124,6 +124,12 @@ def parse_lenta_rss() -> None:
                 continue
 
         print('RSS parsed successfully!')
+        end = time.time()
+        mes = f'Elapsed time: {end - start}'
+        print(mes)
+        logging.info(mes)
+
+        response.close()
         time.sleep(60 * 60)  # Sleep for an hour before parsing next iteration
 
 
@@ -144,7 +150,7 @@ def hello_world() -> str:
 
 @app.route('/rss')
 def index():
-    with open('output.xml', 'r', encoding='utf-8') as f:
+    with open('../output.xml', 'r', encoding='utf-8') as f:
         rss = f.readlines()
     return ''.join(rss)  # rss
 
