@@ -9,7 +9,7 @@ VENV_PATH="/home/rss_bot/ubuntu_env"
 apt install -y python3-pip
 apt install -y python3-venv
 
-# создадим виртуальное окружение и установим в него зависимости согласно requirements.txt
+# Создадим виртуальное окружение и установим в него зависимости согласно requirements.txt
 python3 -m venv ubuntu_env
 source ubuntu_env/bin/activate
 pip install -r requirements.txt
