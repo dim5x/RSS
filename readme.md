@@ -1,4 +1,9 @@
-
-1. ```cd /rss_bot```
-2. ```chmod +x deploy.sh```
-3. ```./deploy.sh```
+```shell
+cd /rss_bot
+```
+```shell
+chmod +x deploy.sh
+```
+```shell
+./deploy.sh
+```
