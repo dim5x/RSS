@@ -30,13 +30,8 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/dim5x/RSS/refs/heads/mas
 cd ~/rss_bot && ./uninstall.sh
 ```
 
-```bash
-git clone https://github.com/dim5x/RSS.git
-cd RSS
-chmod +x deploy.sh
-./deploy.sh
-````
-### 📌 Пример
+
+### 📌 Пример:
 До:
 ```
 <description></description>

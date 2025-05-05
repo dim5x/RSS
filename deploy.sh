@@ -49,8 +49,8 @@ sudo systemctl status rss_bot
 # Очищаем от readme.md, install.sh
 rm readme.md install.sh deploy.sh
 
-echo "Команда для проверки статуса: sudo systemctl status rss_bot"
-echo "RSS-feed здесь: http://{ваш адрес}:5000/rss"
+echo "🔍 Команда для проверки статуса: sudo systemctl status rss_bot"
+echo "🔍 RSS-feed здесь: http://{ваш адрес}:5000/rss"
 
 # Выводим IP-адрес
 IP_ADDRESS=$(hostname -I | awk '{print $1}')
