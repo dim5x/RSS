@@ -50,3 +50,4 @@ sudo systemctl status rss_bot
 rm readme.md install.sh deploy.sh
 
 echo "Команда для проверки статуса: sudo systemctl status rss_bot"
+echo "RSS-feed здесь: http://{ваш адрес}:5000/rss"
