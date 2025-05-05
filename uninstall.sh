@@ -17,3 +17,4 @@ sudo rm -rf "$INSTALL_DIR"
 
 echo "---✅ rss_bot успешно удалён."
 cd ~
+exec bash

@@ -53,5 +53,5 @@ echo "Команда для проверки статуса: sudo systemctl stat
 echo "RSS-feed здесь: http://{ваш адрес}:5000/rss"
 
 # Выводим IP-адрес
-IP_ADDRESS=$(ip -4 addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+IP_ADDRESS=$(hostname -I | awk '{print $1}')
 echo "🌐 IP-адрес для RSS-feed: http://$IP_ADDRESS:5000/rss"
