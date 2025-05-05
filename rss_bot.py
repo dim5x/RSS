@@ -14,7 +14,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Create a rotating file handler
-handler = RotatingFileHandler('../error.log', maxBytes=100000, backupCount=2, encoding='utf-8')  # 100000 bytes = 100 KB
+handler = RotatingFileHandler('error.log', maxBytes=100000, backupCount=2, encoding='utf-8')  # 100000 bytes = 100 KB
 formatter = logging.Formatter('%(asctime)s \t %(name)s \t %(levelname)s \t %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
 handler.setFormatter(formatter)
 
@@ -92,7 +92,7 @@ def parse_lenta_rss() -> None:
             logging.info('Connected to Lenta!')
             if response.status_code != 200:
                 raise Exception('Something went wrong with request to Lenta!')
-            with open('../lenta.xml', 'wb') as file:
+            with open('lenta.xml', 'wb') as file:
                 file.write(response.content)
         except Exception as e:
             print(e)
@@ -100,7 +100,7 @@ def parse_lenta_rss() -> None:
             time.sleep(60 * 60)
             continue
 
-        tree = ElemTree.parse('../lenta.xml')  # Parse the XML file
+        tree = ElemTree.parse('lenta.xml')  # Parse the XML file
         root = tree.getroot()  # Get the root of the XML tree
 
         # Parse
@@ -150,7 +150,7 @@ def hello_world() -> str:
 
 @app.route('/rss')
 def index():
-    with open('../output.xml', 'r', encoding='utf-8') as f:
+    with open('output.xml', 'r', encoding='utf-8') as f:
         rss = f.readlines()
     return ''.join(rss)  # rss
 

@@ -22,6 +22,10 @@
 
 
 ## 📦 Установка
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/dim5x/RSS/main/install.sh)"
+
+```
 
 ```bash
 git clone https://github.com/dim5x/RSS.git
