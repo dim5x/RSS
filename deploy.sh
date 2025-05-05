@@ -50,4 +50,8 @@ sudo systemctl status rss_bot
 rm readme.md install.sh deploy.sh
 
 echo "Команда для проверки статуса: sudo systemctl status rss_bot"
-echo "RSS-feed здесь: http://{ваш адрес}:5000/rss"
+#echo "RSS-feed здесь: http://{ваш адрес}:5000/rss"
+
+# Выводим IP-адрес
+IP_ADDRESS=$(ip -4 addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+echo "🌐 IP-адрес для RSS-feed: http://$IP_ADDRESS:5000/rss"
