@@ -23,7 +23,7 @@
 
 ## 📦 Установка
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/dim5x/RSS/main/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/dim5x/RSS/refs/heads/master/install.sh)"
 
 ```
 
