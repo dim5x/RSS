@@ -1,7 +1,6 @@
 from difflib import SequenceMatcher
 import logging
 from logging.handlers import RotatingFileHandler
-import socket
 import time
 from threading import Thread
 import xml.etree.ElementTree as ElemTree
@@ -156,10 +155,6 @@ def index():
     return ''.join(rss)  # rss
 
 
-hostname = socket.gethostname()
-local_ip = socket.gethostbyname(hostname)
-
 
 if __name__ == '__main__':
-    print(f"🌐 Сервер доступен по адресу: http://{local_ip}:5000/rss")
     app.run(debug=False, host='0.0.0.0', port=5000)
