@@ -48,3 +48,5 @@ sudo systemctl status rss_bot
 
 # Очищаем от readme.md, install.sh
 rm readme.md install.sh deploy.sh
+
+echo "Команда для проверки статуса: sudo systemctl status rss_bot"
