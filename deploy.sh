@@ -2,8 +2,8 @@
 
 # Параметры
 SERVICE_NAME="rss_bot"
-SCRIPT_PATH="/home/rss_bot/rss_bot.py"
-VENV_PATH="/home/rss_bot/ubuntu_env"
+SCRIPT_PATH="$HOME/rss_bot/rss_bot.py"
+VENV_PATH="$HOME/rss_bot/ubuntu_env"
 
 # Запускать в папке проекта (/rss_bot)
 apt install -y python3-pip
