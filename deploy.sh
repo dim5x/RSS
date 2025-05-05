@@ -47,4 +47,4 @@ echo "Сервис $SERVICE_NAME успешно создан и запущен."
 sudo systemctl status rss_bot
 
 # Очищаем от readme.md, install.sh
-rm readme.md, install.sh
+rm readme.md install.sh
