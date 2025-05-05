@@ -5,7 +5,8 @@ INSTALL_DIR="$HOME/rss_bot"
 
 echo "---🛑 Остановка и отключение сервиса..."
 sudo systemctl stop $SERVICE_NAME
-sudo systemctl disable $SERVICE_NAME
+DISABLE_OUTPUT=$(sudo systemctl disable $SERVICE_NAME 2>&1)
+echo "---🛑 Отключение автозапуска: $DISABLE_OUTPUT"
 
 echo "---🧹 Удаление unit-файла systemd..."
 sudo rm -f /etc/systemd/system/$SERVICE_NAME.service
