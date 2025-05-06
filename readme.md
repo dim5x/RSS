@@ -21,20 +21,22 @@
 
 
 
-## 📦 Установка:
-### Для Linux:
+## 📦 Установка для Linux в качестве сервиса:
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/dim5x/RSS/refs/heads/master/install.sh)"
 ```
-### Для Windows:
-```bash
-pip install -r requirements.txt
-python rss_bot.py
-```
+
 ## 🗑️ Удаление для Linux:
 ```bash
 cd ~/rss_bot && ./uninstall.sh
 ```
+
+## Использование для Windows:
+```bash
+pip install -r requirements.txt
+python rss_bot.py
+```
+
 
 
 ### 📌 Пример:
