@@ -25,6 +25,10 @@
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/dim5x/RSS/refs/heads/master/install.sh)"
 ```
+или: 
+```bash
+curl -fsSL https://raw.githubusercontent.com/dim5x/RSS/refs/heads/master/install.sh | bash -s
+```
 
 ## 🗑️ Удаление для Linux:
 ```bash
