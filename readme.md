@@ -19,9 +19,6 @@
 - `requirements.txt` - файл зависимостей.
 - `unistall.sh` — скрипт удаления.
 
-curl -fsSL https://dim5x.github.io/RSS/install.sh | bash
-curl -fsSL https://github.com/dim5x/RSS/raw/master/install.sh | bash
-
 ## 📦 Установка для Linux в качестве сервиса:
 ```bash
 curl -fsSL https://dim5x.github.io/RSS/install.sh | bash -s
