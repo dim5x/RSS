@@ -31,5 +31,5 @@ soupsieve==2.6
 tinysegmenter==0.3
 tldextract==5.1.2
 tqdm==4.66.5
-urllib3==2.2.3
+urllib3==2.5.0
 Werkzeug==3.0.4
