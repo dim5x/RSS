@@ -21,6 +21,8 @@ handler.setFormatter(formatter)
 # Add the handler to the root logger
 logger.addHandler(handler)
 
+URL = 'https://lenta.ru/rss'
+
 
 def sim(a: str, b: str) -> float:
     """
@@ -76,58 +78,71 @@ def parse_text(url: str) -> str:
     return article_text
 
 
+def fetch_rss_feed(url) -> None:
+    """Download and save RSS feed."""
+    try:
+        response = requests.get(URL, timeout=5)
+        response.raise_for_status()
+        with open('lenta.xml', 'wb') as f:
+            f.write(response.content)
+        logging.info('Successfully fetched Lenta RSS')
+    except Exception as e:
+        print('Error:', e)
+        logging.error(e)
+    finally:
+        if 'response' in locals():
+            response.close()
+
+
+def process_xml_content():
+    tree = ElemTree.parse('lenta.xml')  # Parse the XML file
+    root = tree.getroot()  # Get the root of the XML tree
+
+    # Parse
+    for ind, item in enumerate(root.iter('item'), start=1):
+        title = item.find('title').text
+        print(ind, '-', title)
+        link = None
+        try:
+            category = item.find('category').text
+            if category not in ('Путешествия', 'Спорт'):
+                for element in item:
+                    if element.tag == 'link':
+                        link = element.text
+                    if element.tag in ('author', 'category', 'guid'):
+                        item.remove(element)
+                    if element.tag == 'description' and len(element.text) < 10:
+                        element.text = parse_text(link)  # Parse and update description if condition is met
+            tree.write('output.xml', encoding='utf-8')  # Write the updated XML tree to a new file
+        except Exception as e:
+            logging.error(e, title)
+            continue
+
+    print('RSS parsed successfully!')
+
+
 def parse_lenta_rss() -> None:
     """
     Function to parse the RSS feed from Lenta.ru
     """
-    start = time.time()
     while True:
-        url = 'https://lenta.ru/rss'
-        # Connect
+        start = time.time()
         try:
-            response = requests.get(url, timeout=5)
-            logging.info('Connected to Lenta!')
-            if response.status_code != 200:
-                raise Exception('Something went wrong with request to Lenta!')
-            with open('lenta.xml', 'wb') as file:
-                file.write(response.content)
+            # 1. Fetch RSS.
+            fetch_rss_feed(URL)
+
+            # 2. Parse and process XML.
+            process_xml_content()
+
+            end = time.time()
+            mes = f'Elapsed time: {end - start}'
+            print(mes)
+            logging.info(mes)
         except Exception as e:
-            print('error:', e)
+            print('Error:', e)
             logging.error(e)
-            time.sleep(60 * 60)
-            continue
 
-        tree = ElemTree.parse('lenta.xml')  # Parse the XML file
-        root = tree.getroot()  # Get the root of the XML tree
-
-        # Parse
-        for ind, item in enumerate(root.iter('item'), start=1):
-            title = item.find('title').text
-            print(ind, '-', title)
-            link = None
-            try:
-                category = item.find('category').text
-                if category not in ('Путешествия', 'Спорт'):
-                    for element in item:
-                        if element.tag == 'link':
-                            link = element.text
-                        if element.tag in ('author', 'category', 'guid'):
-                            item.remove(element)
-                        if element.tag == 'description' and len(element.text) < 10:
-                            element.text = parse_text(link)  # Parse and update description if condition is met
-                tree.write('output.xml', encoding='utf-8')  # Write the updated XML tree to a new file
-            except Exception as e:
-                logging.error(e, title)
-                continue
-
-        print('RSS parsed successfully!')
-        end = time.time()
-        mes = f'Elapsed time: {end - start}'
-        print(mes)
-        logging.info(mes)
-
-        response.close()
-        time.sleep(60 * 60)  # Sleep for an hour before parsing next iteration
+        time.sleep(60 * 60)  # Wait 1 hour
 
 
 thread = Thread(target=parse_lenta_rss)
