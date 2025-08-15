@@ -3,9 +3,9 @@ import logging
 from logging.handlers import RotatingFileHandler
 import time
 from threading import Thread
-import xml.etree.ElementTree as ElemTree
 
 from flask import Flask
+import defusedxml.ElementTree as ElemTree # Заменил стандартный парсер на безопасную версию.
 from newspaper import Article
 import requests
 
