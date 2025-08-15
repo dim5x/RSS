@@ -1,3 +1,4 @@
+import configparser
 from difflib import SequenceMatcher
 import logging
 from logging.handlers import RotatingFileHandler
@@ -8,6 +9,10 @@ from flask import Flask
 import defusedxml.ElementTree as ElemTree  # Заменил стандартный парсер на безопасную версию.
 from newspaper import Article
 import requests
+
+# Configure configparser
+config = configparser.ConfigParser()
+config.read('config.ini')
 
 # Configure root logger
 logger = logging.getLogger()
@@ -168,4 +173,6 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    host = config['settings']['host']
+    port = config['settings'].getint('port')
+    app.run(debug=False, host=host, port=port)
