@@ -70,8 +70,8 @@ def parse_text(url: str) -> str:
 
         # Find and remove the last line containing 'Ранее'
         ind = max([i for i, line in enumerate(article_text) if 'Ранее' in line])
-    except Exception:
-        pass
+    except Exception as e:
+        print(e)
 
     # Join non-empty lines with newline
     article_text = '\n'.join(line for line in article_text[:ind] if line)
