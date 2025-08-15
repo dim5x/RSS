@@ -1,5 +1,7 @@
 # RSS Description Fixer for Lenta.ru 📰
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/f707dca4e1d44761869a15968fe59ac7)](https://app.codacy.com/gh/dim5x/RSS/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+
 Этот проект исправляет RSS-ленту сайта [Lenta.ru](https://lenta.ru), добавляя недостающие описания к новостным статьям. Особенно полезен при использовании RSS-ридеров, которые зависят от полноты информации в ленте.
 Писалось для rss-reader'a на iPhone 4s.
 
