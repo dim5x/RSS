@@ -23,9 +23,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=$(whoami)
-WorkingDirectory=$(dirname $SCRIPT_PATH)
-ExecStart=$VENV_PATH/bin/python $SCRIPT_PATH
+User="$(whoami)"
+WorkingDirectory="$(dirname "$SCRIPT_PATH")"
+ExecStart="$VENV_PATH/bin/python" "$SCRIPT_PATH"
 Restart=always
 
 [Install]
