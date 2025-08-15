@@ -5,7 +5,7 @@ import time
 from threading import Thread
 
 from flask import Flask
-import defusedxml.ElementTree as ElemTree # Заменил стандартный парсер на безопасную версию.
+import defusedxml.ElementTree as ElemTree  # Заменил стандартный парсер на безопасную версию.
 from newspaper import Article
 import requests
 
@@ -61,20 +61,17 @@ def parse_text(url: str) -> str:
     # Add period at the end of each line if not present
     article_text = [line + '.' if line and not line.endswith('.') else line for line in article_text]
 
-    ind = 50
     try:
         # Check similarity between the first two lines and remove if similar
         similarity = sim(article_text[0], article_text[1])
         if similarity >= 0.3:
             article_text = article_text[1:]
-
-        # Find and remove the last line containing 'Ранее'
-        ind = max([i for i, line in enumerate(article_text) if 'Ранее' in line])
     except Exception as e:
-        print(e)
+        print('error:', e)
 
-    # Join non-empty lines with newline
-    article_text = '\n'.join(line for line in article_text[:ind] if line)
+    # Find and remove the last line containing 'Ранее'
+    ind = max([i for i, line in enumerate(article_text) if 'Ранее' in line], default=50)
+    article_text = '\n'.join(line for line in article_text[:ind] if line)  # Join non-empty lines with newline
 
     return article_text
 
@@ -88,14 +85,14 @@ def parse_lenta_rss() -> None:
         url = 'https://lenta.ru/rss'
         # Connect
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=5)
             logging.info('Connected to Lenta!')
             if response.status_code != 200:
                 raise Exception('Something went wrong with request to Lenta!')
             with open('lenta.xml', 'wb') as file:
                 file.write(response.content)
         except Exception as e:
-            print(e)
+            print('error:', e)
             logging.error(e)
             time.sleep(60 * 60)
             continue
@@ -107,7 +104,7 @@ def parse_lenta_rss() -> None:
         for ind, item in enumerate(root.iter('item'), start=1):
             title = item.find('title').text
             print(ind, '-', title)
-
+            link = None
             try:
                 category = item.find('category').text
                 if category not in ('Путешествия', 'Спорт'):
@@ -155,6 +152,5 @@ def index():
     return ''.join(rss)  # rss
 
 
-
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    app.run(debug=False, port=5000)
