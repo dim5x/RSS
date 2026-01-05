@@ -1,4 +1,4 @@
-##!/bin/bash
+#!/bin/bash
 #
 ## Параметры
 #SERVICE_NAME="rss_bot"
@@ -56,7 +56,6 @@
 #IP_ADDRESS=$(hostname -I | awk '{print $1}')
 #echo "🌐 IP-адрес для RSS-feed: http://$IP_ADDRESS:5000/rss"
 
-#!/bin/bash
 
 # set -e для прерывания при ошибках
 set -e
