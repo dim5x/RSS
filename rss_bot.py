@@ -30,8 +30,8 @@ logger.addHandler(handler)
 URL = 'https://lenta.ru/rss'
 
 # Создать директорию, если её нет
-temp_dir = '/tmp/.newspaper_scraper'
-os.makedirs(temp_dir, exist_ok=True)
+# temp_dir = '/tmp/.newspaper_scraper'
+# os.makedirs(temp_dir, exist_ok=True)
 # os.chmod(temp_dir, 0o755)
 
 
