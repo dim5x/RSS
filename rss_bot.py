@@ -32,7 +32,7 @@ URL = 'https://lenta.ru/rss'
 # Создать директорию, если её нет
 temp_dir = '/tmp/.newspaper_scraper'
 os.makedirs(temp_dir, exist_ok=True)
-os.chmod(temp_dir, 0o755)
+# os.chmod(temp_dir, 0o755)
 
 
 def sim(a: str, b: str) -> float:
@@ -61,6 +61,7 @@ def parse_text(url: str) -> str:
         str: The parsed text content
 
     """
+    if url is None: return ''
     article = Article(url, language='ru')  # Create Article object for the given URL
     article.download()  # Download the article content
     article.parse()  # Parse the article
@@ -127,12 +128,13 @@ def process_xml_content():
                         item.remove(element)
                     if element.tag == 'description' and len(element.text) < 10:
                         element.text = parse_text(link)  # Parse and update description if condition is met
-            tree.write('output.xml', encoding='utf-8')  # Write the updated XML tree to a new file
+            # tree.write('output.xml', encoding='utf-8')  # Write the updated XML tree to a new file
         except Exception as e:
             if isinstance(title, bytes):
                 title = title.decode("utf-8", errors="ignore")
             logging.error(f"Ошибка: {e}, заголовок: {title}")
             continue
+    tree.write('output.xml', encoding='utf-8')
 
     print('RSS parsed successfully!')
 
