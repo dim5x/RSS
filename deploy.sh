@@ -76,7 +76,10 @@ python3 -m venv "$VENV_PATH"
 
 echo "📦 Установка Python-зависимостей..."
 source "$VENV_PATH/bin/activate"
-pip install -r "$PROJECT_DIR/requirements.txt"
+# Установить пакеты по одному (меньше памяти за раз)
+while read requirement; do
+    pip install --no-cache-dir "$requirement"
+done < "$PROJECT_DIR/requirements.txt"
 deactivate
 
 echo "🛠️ Создание systemd сервиса..."
