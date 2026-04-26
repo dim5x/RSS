@@ -32,7 +32,7 @@ URL = 'https://lenta.ru/rss'
 # Создать директорию, если её нет
 temp_dir = '/tmp/.newspaper_scraper'
 os.makedirs(temp_dir, exist_ok=True)
-os.chmod(temp_dir, 0o777)
+os.chmod(temp_dir, 0o644)
 
 
 def sim(a: str, b: str) -> float:
