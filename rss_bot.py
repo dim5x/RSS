@@ -32,7 +32,7 @@ URL = 'https://lenta.ru/rss'
 # Создать директорию, если её нет
 temp_dir = '/tmp/.newspaper_scraper'
 os.makedirs(temp_dir, exist_ok=True)
-os.chmod(temp_dir, 0o644)
+os.chmod(temp_dir, 0o755)
 
 
 def sim(a: str, b: str) -> float:
@@ -79,6 +79,7 @@ def parse_text(url: str) -> str:
     try:
         # Check similarity between the first two lines and remove if similar
         similarity = sim(article_text[0], article_text[1])
+        print(similarity)
         if similarity >= 0.3:
             article_text = article_text[1:]
     except Exception as e:
