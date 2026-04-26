@@ -36,7 +36,8 @@ os.chmod(temp_dir, 0o644)
 
 
 def sim(a: str, b: str) -> float:
-    """ A function that calculates the similarity ratio between two input sequences.
+    """
+    A function that calculates the similarity ratio between two input sequences.
 
     Parameters:
         a (any): The first input sequence.
@@ -50,7 +51,8 @@ def sim(a: str, b: str) -> float:
 
 
 def parse_text(url: str) -> str:
-    """ Parses the text content from the given URL and returns it.
+    """
+    Parses the text content from the given URL and returns it.
 
     Parameters:
         url (str): The URL of the article to parse
@@ -90,7 +92,7 @@ def parse_text(url: str) -> str:
 
 
 def fetch_rss_feed(url) -> None:
-    """ Download and save RSS feed. """
+    """Download and save RSS feed."""
     try:
         response = requests.get(URL, timeout=5)
         response.raise_for_status()
@@ -135,7 +137,7 @@ def process_xml_content():
 
 
 def parse_lenta_rss() -> None:
-    """ Function to parse the RSS feed from Lenta.ru. """
+    """Function to parse the RSS feed from Lenta.ru."""
     while True:
         start = time.time()
         try:
@@ -164,7 +166,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello_world() -> str:
-    """ A function that returns a message based on whether a thread is alive. """
+    """A function that returns a message based on whether a thread is alive."""
     message = '&#128994;' if thread.is_alive() else '&#128308;'
     return message
 
