@@ -2,6 +2,7 @@ import configparser
 from difflib import SequenceMatcher
 import logging
 from logging.handlers import RotatingFileHandler
+import os
 import time
 from threading import Thread
 
@@ -27,6 +28,11 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 URL = 'https://lenta.ru/rss'
+
+# Создать директорию, если её нет
+temp_dir = '/tmp/.newspaper_scraper'
+os.makedirs(temp_dir, exist_ok=True)
+os.chmod(temp_dir, 0o777)
 
 
 def sim(a: str, b: str) -> float:
@@ -120,7 +126,9 @@ def process_xml_content():
                         element.text = parse_text(link)  # Parse and update description if condition is met
             tree.write('output.xml', encoding='utf-8')  # Write the updated XML tree to a new file
         except Exception as e:
-            logging.error(e, title)
+            if isinstance(title, bytes):
+                title = title.decode("utf-8", errors="ignore")
+            logging.error(f"Ошибка: {e}, заголовок: {title}")
             continue
 
     print('RSS parsed successfully!')
