@@ -40,25 +40,27 @@ def sim(a: str, b: str) -> float:
     A function that calculates the similarity ratio between two input sequences.
 
     Parameters:
-    a (any): The first input sequence.
-    b (any): The second input sequence.
+        a (any): The first input sequence.
+        b (any): The second input sequence.
 
     Returns:
-    float: The similarity ratio between the two input sequences.
+        float: The similarity ratio between the two input sequences.
+
     """
     return SequenceMatcher(None, a, b).ratio()
 
 
 def parse_text(url: str) -> str:
     """
-       Parses the text content from the given URL and returns it.
+    Parses the text content from the given URL and returns it.
 
-       Parameters:
-       url (str): The URL of the article to parse
+    Parameters:
+        url (str): The URL of the article to parse
 
-       Returns:
-       str: The parsed text content
-       """
+    Returns:
+        str: The parsed text content
+
+    """
     article = Article(url, language='ru')  # Create Article object for the given URL
     article.download()  # Download the article content
     article.parse()  # Parse the article
@@ -135,9 +137,7 @@ def process_xml_content():
 
 
 def parse_lenta_rss() -> None:
-    """
-    Function to parse the RSS feed from Lenta.ru
-    """
+    """Function to parse the RSS feed from Lenta.ru."""
     while True:
         start = time.time()
         try:
@@ -166,9 +166,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello_world() -> str:
-    """
-    A function that returns a message based on whether a thread is alive.
-    """
+    """A function that returns a message based on whether a thread is alive."""
     message = '&#128994;' if thread.is_alive() else '&#128308;'
     return message
 
