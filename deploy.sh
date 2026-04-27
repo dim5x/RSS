@@ -138,3 +138,4 @@ echo ""
 echo "🌐 RSS-feed будет доступен по адресу:"
 echo "   http://$IP_ADDRESS:5000/rss"
 echo "   (если порт 5000 открыт в брандмауэре)"
+cd ~
