@@ -20,7 +20,8 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Create a rotating file handler.
-file_handler = RotatingFileHandler('error.log', maxBytes=100000, backupCount=2, encoding='utf-8')  # 100000 bytes = 100 KB
+file_handler = RotatingFileHandler('error.log', maxBytes=100000, backupCount=2,
+                                   encoding='utf-8')  # 100000 bytes = 100 KB
 console_handler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s \t %(name)s \t %(levelname)s \t %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
 
@@ -39,12 +40,6 @@ URL = 'https://lenta.ru/rss'
 # "Кэш".
 seen = set()
 lock = Lock()
-
-
-# Создать директорию, если её нет
-# temp_dir = '/tmp/.newspaper_scraper'
-# os.makedirs(temp_dir, exist_ok=True)
-# os.chmod(temp_dir, 0o755)
 
 
 def sim(a: str, b: str) -> float:
@@ -94,8 +89,8 @@ def parse_text(url: str) -> str:
         similarity = sim(article_text[0], article_text[1])
         if similarity >= 0.3:
             article_text = article_text[1:]
-    except Exception as e:
-        logging.exception(e)
+    except Exception:
+        logging.exception('Ошибка')
 
     # Find and remove the last line containing 'Ранее'
     ind = max([i for i, line in enumerate(article_text) if 'Ранее' in line], default=50)
@@ -107,46 +102,47 @@ def parse_text(url: str) -> str:
 def fetch_rss_feed(url) -> None:
     """Download and save RSS feed."""
     try:
-        response = requests.get(URL, timeout=5)
-        response.raise_for_status()
-        with open('lenta.xml', 'wb') as f:
-            f.write(response.content)
+        with requests.get(url, timeout=5) as response:
+            response.raise_for_status()
+            with open('lenta.xml', 'wb') as f:
+                f.write(response.content)
         logging.info('Successfully fetched Lenta RSS.')
-    except Exception as e:
-        logging.exception(f'from fetch_rss_feed(url): {e}')
-    finally:
-        if 'response' in locals():
-            response.close()
+
+    except Exception:
+        logging.exception(f'from fetch_rss_feed(url)')
 
 
 def process_item(item):
-    title = item.find('title').text
-    print(title)
-
-    with lock:
-        if title in seen:
-            return
-        seen.add(title)
-
+    # Периодически очищаем кэш.
     if len(seen) > 1000:
         with lock:
             seen.clear()
 
-    link = None
     try:
-        category = item.find('category').text
-        if category not in ('Путешествия', 'Спорт'):
-            for element in item:
-                if element.tag == 'link':
-                    link = element.text
-                if element.tag in ('author', 'category', 'guid'):
-                    item.remove(element)
-                if element.tag == 'description' and len(element.text) < 10:
-                    element.text = parse_text(link)  # Parse and update description if condition is met
-    except Exception as e:
-        if isinstance(title, bytes):
-            title = title.decode("utf-8", errors="ignore")
-        logging.exception(f"Ошибка: {e}, заголовок: {title}")
+        # Извлекаем:
+        category = item.findtext('category', default='')
+        if category in ('Путешествия', 'Спорт'):
+            return
+
+        title = item.findtext('title', default='')
+        print(title)
+
+        with lock:
+            if title in seen:
+                return
+            seen.add(title)
+
+        link = item.findtext('link', default='')
+        image_url = item.find('enclosure').get('url')
+
+        for element in list(item):
+            if element.tag in ('author', 'category', 'guid', 'enclosure'):
+                item.remove(element)
+            if element.tag == 'description' and len(element.text) < 10:
+                element.text = f'<img src="{image_url}"/><br>{parse_text(link)}'  # Parse and update description if condition is met
+
+    except Exception:
+        logging.exception(f"Ошибка:")
 
 
 def process_xml_content():
