@@ -78,7 +78,7 @@ echo "📦 Установка Python-зависимостей..."
 source "$VENV_PATH/bin/activate"
 # Установить пакеты по одному (меньше памяти за раз)
 while read requirement; do
-    pip install --no-cache-dir "$requirement"
+    pip install --no-cache-dir --prefer-binary "$requirement"
 done < "$PROJECT_DIR/requirements.txt"
 deactivate
 

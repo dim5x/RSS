@@ -5,7 +5,7 @@ from difflib import SequenceMatcher
 import logging
 from logging.handlers import RotatingFileHandler
 import time
-from threading import Thread, Lock
+from threading import Thread
 
 from flask import Flask, send_from_directory
 import defusedxml.ElementTree as ElemTree  # Заменил стандартный парсер на безопасную версию.
@@ -39,7 +39,11 @@ logging.getLogger("werkzeug").setLevel(logging.ERROR)
 OUT_URL = 'https://lenta.ru/rss'
 LOCAL_URL = "http://192.168.0.101:5000/images/"
 FALLBACK_URL = LOCAL_URL + "fallback.jpg"
+IMAGE_LIST = []
 
+from collections import deque
+
+dq = deque(maxlen=200)
 
 def sim(a: str, b: str) -> float:
     """
@@ -111,27 +115,41 @@ def fetch_rss_feed(url) -> None:
         logging.exception(f'from fetch_rss_feed(url)')
 
 
-def download_image(url) -> str:
-    if not url:
-        return FALLBACK_URL
+def download_image(dq):
+    if not dq:
+        return
 
-    namefile = url.split('/')[-1]
-    # если уже скачано — используем
-    if os.path.exists(f'images/{namefile}'):
-        return LOCAL_URL + namefile
+    list_of_files = set(os.listdir("images"))
+    print(f'{list_of_files=}')
+    print(len(list_of_files))
+    # dif = set([filename.split('/')[-1] for filename in dq]).difference(list_of_files)
+    dif = [i for i in dq if i.split('/')[-1] not in list_of_files]
 
-    try:
-        r = requests.get(url, timeout=(5, 10), headers={"User-Agent": "Mozilla/5.0"})
-        r.raise_for_status()
-        with open(namefile, 'wb') as f:
-            f.write(r.content)
+    print(f'{dif=}')
+    print(len(dif))
+    # breakpoint()
 
-        return LOCAL_URL + namefile
+    for url in dif:
+        # namefile = url.split('/')[-1]
+        # если уже скачано — используем
+        # if os.path.exists(f'images/{namefile}'):
+        #     continue
+        # url = OUT_URL + filename
+        try:
+            logging.info(f'Downloading {url}')
+            r = requests.get(url, timeout=(5, 10), headers={"User-Agent": "Mozilla/5.0"})
+            r.raise_for_status()
+            with open(f'/images/{url.split('/')[-1]}', 'wb') as f:
+                f.write(r.content)
+                logging.info(f'Successfully downloaded image.')
+            time.sleep(2)
 
-    except Exception:
-        logging.exception(f"download_image failed: {url}")
-        return FALLBACK_URL
+        except Exception:
+            logging.exception(f"download_image failed: {url}")
 
+    # global IMAGE_LIST
+    # IMAGE_LIST = []
+    logging.info('Downloading images done.')
 
 def process_item(item):
     try:
@@ -139,20 +157,25 @@ def process_item(item):
         category = item.findtext('category', default='')
         if category in ('Путешествия', 'Спорт'):
             return
-
+            # item.remove('category')
         title = item.findtext('title', default='')
         print(title)
 
         link = item.findtext('link', default='')
         image_url = item.find('enclosure').get('url')
-        local_image_url = download_image(image_url)
+        IMAGE_LIST.append(image_url)
+        dq.append(image_url)
+        local_image_url = LOCAL_URL + image_url.split('/')[-1]
+        print(f'{local_image_url=}')
         for element in list(item):
-            if element.tag in ('author', 'category', 'guid'):
+            if element.tag in ('author', 'category', 'guid', 'enclosure'):
                 item.remove(element)
             if element.tag == 'description' and len(element.text) < 10:
-                element.text = f'{parse_text(link)}'  # Parse and update description if condition is met
-            if element.tag == 'enclosure':
-                element.set('url', local_image_url)
+                # element.text = f'{parse_text(link)}'  # Parse and update description if condition is met
+                img_html = f'<img src="{local_image_url}" style="width:100%; height:auto; display:block; margin-bottom:10px;" />'
+                element.text = f'<![CDATA[{img_html}{parse_text(link)}]]>'
+            # if element.tag == 'enclosure':
+                # element.set('url', local_image_url)
 
     except Exception:
         logging.exception(f"Ошибка:")
@@ -196,34 +219,40 @@ def parse_lenta_rss() -> None:
             mes = f'Elapsed time: {end - start}'
             logging.info(mes)
 
+            if IMAGE_LIST:
+                logging.info('Downloading images...')
+                thread2 = Thread(target=download_image(dq))
+                thread2.start()
+                print(thread2.is_alive())
+
         except Exception as e:
             logging.exception(e)
 
         time.sleep(60 * 60)  # Wait 1 hour
 
 
-thread = Thread(target=parse_lenta_rss)
-thread.start()
+thread1 = Thread(target=parse_lenta_rss)
+thread1.start()
 
 app = Flask(__name__)
 
 
 @app.route('/')
-def hello_world() -> str:
+def index_route() -> str:
     """A function that returns a message based on whether a thread is alive."""
-    message = '&#128994;' if thread.is_alive() else '&#128308;'
+    message = '&#128994;' if thread1.is_alive() else '&#128308;'
     return message
 
 
 @app.route('/rss')
-def index():
+def rss_route():
     with open('output.xml', 'r', encoding='utf-8') as f:
         rss = f.readlines()
     return ''.join(rss)  # rss
 
 
 @app.route("/images/<path:filename>")
-def images(filename):
+def images_route(filename):
     return send_from_directory("images", filename, mimetype="image/jpeg")
 
 
