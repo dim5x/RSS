@@ -1,3 +1,4 @@
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import configparser
 from difflib import SequenceMatcher
@@ -6,7 +7,7 @@ from logging.handlers import RotatingFileHandler
 import time
 from threading import Thread, Lock
 
-from flask import Flask
+from flask import Flask, send_from_directory
 import defusedxml.ElementTree as ElemTree  # Заменил стандартный парсер на безопасную версию.
 from newspaper import Article
 import requests
@@ -35,11 +36,9 @@ logger.addHandler(console_handler)
 # Убираем ненужные сообщения от werkzeug с Esc-последовательностями.
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
-URL = 'https://lenta.ru/rss'
-
-# "Кэш".
-seen = set()
-lock = Lock()
+OUT_URL = 'https://lenta.ru/rss'
+LOCAL_URL = "http://192.168.0.101:5000/images/"
+FALLBACK_URL = LOCAL_URL + "fallback.jpg"
 
 
 def sim(a: str, b: str) -> float:
@@ -112,12 +111,29 @@ def fetch_rss_feed(url) -> None:
         logging.exception(f'from fetch_rss_feed(url)')
 
 
-def process_item(item):
-    # Периодически очищаем кэш.
-    if len(seen) > 1000:
-        with lock:
-            seen.clear()
+def download_image(url) -> str:
+    if not url:
+        return FALLBACK_URL
 
+    namefile = url.split('/')[-1]
+    # если уже скачано — используем
+    if os.path.exists(f'images/{namefile}'):
+        return LOCAL_URL + namefile
+
+    try:
+        r = requests.get(url, timeout=(5, 10), headers={"User-Agent": "Mozilla/5.0"})
+        r.raise_for_status()
+        with open(namefile, 'wb') as f:
+            f.write(r.content)
+
+        return LOCAL_URL + namefile
+
+    except Exception:
+        logging.exception(f"download_image failed: {url}")
+        return FALLBACK_URL
+
+
+def process_item(item):
     try:
         # Извлекаем:
         category = item.findtext('category', default='')
@@ -127,19 +143,16 @@ def process_item(item):
         title = item.findtext('title', default='')
         print(title)
 
-        with lock:
-            if title in seen:
-                return
-            seen.add(title)
-
         link = item.findtext('link', default='')
         image_url = item.find('enclosure').get('url')
-
+        local_image_url = download_image(image_url)
         for element in list(item):
-            if element.tag in ('author', 'category', 'guid', 'enclosure'):
+            if element.tag in ('author', 'category', 'guid'):
                 item.remove(element)
             if element.tag == 'description' and len(element.text) < 10:
-                element.text = f'<img src="{image_url}"/><br>{parse_text(link)}'  # Parse and update description if condition is met
+                element.text = f'{parse_text(link)}'  # Parse and update description if condition is met
+            if element.tag == 'enclosure':
+                element.set('url', local_image_url)
 
     except Exception:
         logging.exception(f"Ошибка:")
@@ -150,8 +163,17 @@ def process_xml_content():
     root = tree.getroot()  # Get the root of the XML tree
     items = list(root.iter("item"))
 
+    clear_items_dict = {}
+    for item in items:
+        title = item.findtext('title')
+        if item.findtext('category') in ('Путешествия', 'Спорт'):
+            continue
+        if title in clear_items_dict:
+            continue
+        clear_items_dict[title] = item
+
     with ThreadPoolExecutor(max_workers=6) as executor:
-        futures = [executor.submit(process_item, item) for item in items]
+        futures = [executor.submit(process_item, item) for item in clear_items_dict.values()]
         for f in as_completed(futures):
             _ = f.result()
 
@@ -165,7 +187,7 @@ def parse_lenta_rss() -> None:
         start = time.time()
         try:
             # 1. Fetch RSS.
-            fetch_rss_feed(URL)
+            fetch_rss_feed(OUT_URL)
 
             # 2. Parse and process XML.
             process_xml_content()
@@ -173,6 +195,7 @@ def parse_lenta_rss() -> None:
             end = time.time()
             mes = f'Elapsed time: {end - start}'
             logging.info(mes)
+
         except Exception as e:
             logging.exception(e)
 
@@ -197,6 +220,11 @@ def index():
     with open('output.xml', 'r', encoding='utf-8') as f:
         rss = f.readlines()
     return ''.join(rss)  # rss
+
+
+@app.route("/images/<path:filename>")
+def images(filename):
+    return send_from_directory("images", filename, mimetype="image/jpeg")
 
 
 if __name__ == '__main__':
