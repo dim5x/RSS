@@ -11,15 +11,15 @@ import defusedxml.ElementTree as ElemTree  # Заменил стандартны
 from newspaper import Article
 import requests
 
-# Configure configparser
+# Configure configparser.
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-# Configure root logger
+# Configure root logger.
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# Create a rotating file handler
+# Create a rotating file handler.
 file_handler = RotatingFileHandler('error.log', maxBytes=100000, backupCount=2, encoding='utf-8')  # 100000 bytes = 100 KB
 console_handler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s \t %(name)s \t %(levelname)s \t %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
@@ -27,14 +27,16 @@ formatter = logging.Formatter('%(asctime)s \t %(name)s \t %(levelname)s \t %(mes
 file_handler.setFormatter(formatter)
 console_handler.setFormatter(formatter)
 
-# Add the handler to the root logger
+# Add the handler to the root logger.
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
+# Убираем ненужные сообщения от werkzeug с Esc-последовательностями.
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
 URL = 'https://lenta.ru/rss'
 
+# "Кэш".
 seen = set()
 lock = Lock()
 
