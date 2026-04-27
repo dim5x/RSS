@@ -3,7 +3,6 @@ import configparser
 from difflib import SequenceMatcher
 import logging
 from logging.handlers import RotatingFileHandler
-import os
 import time
 from threading import Thread, Lock
 
