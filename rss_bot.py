@@ -153,7 +153,7 @@ def process_xml_content():
     root = tree.getroot()  # Get the root of the XML tree
     items = list(root.iter("item"))
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=6) as executor:
         futures = [executor.submit(process_item, item) for item in items]
         for f in as_completed(futures):
             _ = f.result()
