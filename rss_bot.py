@@ -1,10 +1,11 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import configparser
 from difflib import SequenceMatcher
 import logging
 from logging.handlers import RotatingFileHandler
 import os
 import time
-from threading import Thread
+from threading import Thread, Lock
 
 from flask import Flask
 import defusedxml.ElementTree as ElemTree  # Заменил стандартный парсер на безопасную версию.
@@ -20,14 +21,24 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Create a rotating file handler
-handler = RotatingFileHandler('error.log', maxBytes=100000, backupCount=2, encoding='utf-8')  # 100000 bytes = 100 KB
+file_handler = RotatingFileHandler('error.log', maxBytes=100000, backupCount=2, encoding='utf-8')  # 100000 bytes = 100 KB
+console_handler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s \t %(name)s \t %(levelname)s \t %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
-handler.setFormatter(formatter)
+
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
 
 # Add the handler to the root logger
-logger.addHandler(handler)
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
 URL = 'https://lenta.ru/rss'
+
+seen = set()
+lock = Lock()
+
 
 # Создать директорию, если её нет
 # temp_dir = '/tmp/.newspaper_scraper'
@@ -80,11 +91,10 @@ def parse_text(url: str) -> str:
     try:
         # Check similarity between the first two lines and remove if similar
         similarity = sim(article_text[0], article_text[1])
-        print(similarity)
         if similarity >= 0.3:
             article_text = article_text[1:]
     except Exception as e:
-        print('error:', e)
+        logging.exception(e)
 
     # Find and remove the last line containing 'Ранее'
     ind = max([i for i, line in enumerate(article_text) if 'Ранее' in line], default=50)
@@ -100,43 +110,56 @@ def fetch_rss_feed(url) -> None:
         response.raise_for_status()
         with open('lenta.xml', 'wb') as f:
             f.write(response.content)
-        logging.info('Successfully fetched Lenta RSS')
+        logging.info('Successfully fetched Lenta RSS.')
     except Exception as e:
-        print('Error:', e)
-        logging.error(e)
+        logging.exception(f'from fetch_rss_feed(url): {e}')
     finally:
         if 'response' in locals():
             response.close()
 
 
+def process_item(item):
+    title = item.find('title').text
+    print(title)
+
+    with lock:
+        if title in seen:
+            return
+        seen.add(title)
+
+    if len(seen) > 1000:
+        with lock:
+            seen.clear()
+
+    link = None
+    try:
+        category = item.find('category').text
+        if category not in ('Путешествия', 'Спорт'):
+            for element in item:
+                if element.tag == 'link':
+                    link = element.text
+                if element.tag in ('author', 'category', 'guid'):
+                    item.remove(element)
+                if element.tag == 'description' and len(element.text) < 10:
+                    element.text = parse_text(link)  # Parse and update description if condition is met
+    except Exception as e:
+        if isinstance(title, bytes):
+            title = title.decode("utf-8", errors="ignore")
+        logging.exception(f"Ошибка: {e}, заголовок: {title}")
+
+
 def process_xml_content():
     tree = ElemTree.parse('lenta.xml')  # Parse the XML file
     root = tree.getroot()  # Get the root of the XML tree
+    items = list(root.iter("item"))
 
-    # Parse
-    for ind, item in enumerate(root.iter('item'), start=1):
-        title = item.find('title').text
-        print(ind, '-', title)
-        link = None
-        try:
-            category = item.find('category').text
-            if category not in ('Путешествия', 'Спорт'):
-                for element in item:
-                    if element.tag == 'link':
-                        link = element.text
-                    if element.tag in ('author', 'category', 'guid'):
-                        item.remove(element)
-                    if element.tag == 'description' and len(element.text) < 10:
-                        element.text = parse_text(link)  # Parse and update description if condition is met
-            # tree.write('output.xml', encoding='utf-8')  # Write the updated XML tree to a new file
-        except Exception as e:
-            if isinstance(title, bytes):
-                title = title.decode("utf-8", errors="ignore")
-            logging.error(f"Ошибка: {e}, заголовок: {title}")
-            continue
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(process_item, item) for item in items]
+        for f in as_completed(futures):
+            _ = f.result()
+
     tree.write('output.xml', encoding='utf-8')
-
-    print('RSS parsed successfully!')
+    logging.info('RSS parsed successfully!')
 
 
 def parse_lenta_rss() -> None:
@@ -152,11 +175,9 @@ def parse_lenta_rss() -> None:
 
             end = time.time()
             mes = f'Elapsed time: {end - start}'
-            print(mes)
             logging.info(mes)
         except Exception as e:
-            print('Error:', e)
-            logging.error(e)
+            logging.exception(e)
 
         time.sleep(60 * 60)  # Wait 1 hour
 
