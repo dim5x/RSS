@@ -7,9 +7,9 @@ from logging.handlers import RotatingFileHandler
 import time
 from threading import Thread
 
+from bs4 import BeautifulSoup
 from flask import Flask, send_from_directory
 import defusedxml.ElementTree as ElemTree  # Заменил стандартный парсер на безопасную версию.
-from newspaper import Article
 import requests
 
 # Configure configparser.
@@ -40,6 +40,8 @@ OUT_URL = 'https://lenta.ru/rss'
 LOCAL_URL = "http://192.168.0.101:5000/images/"
 FALLBACK_URL = LOCAL_URL + "fallback.jpg"
 IMAGE_LIST = []
+PATH_FOR_IMAGES = os.getcwd() + '\\images\\'
+
 
 from collections import deque
 
@@ -60,50 +62,68 @@ def sim(a: str, b: str) -> float:
     return SequenceMatcher(None, a, b).ratio()
 
 
-def parse_text(url: str) -> str:
-    """
-    Parses the text content from the given URL and returns it.
+# def parse_text(url: str) -> str:
+#     """
+#     Parses the text content from the given URL and returns it.
+#
+#     Parameters:
+#         url (str): The URL of the article to parse
+#
+#     Returns:
+#         str: The parsed text content
+#
+#     """
+#     if url is None: return ''
+#     article = Article(url, language='ru')  # Create Article object for the given URL
+#     article.download()  # Download the article content
+#     article.parse()  # Parse the article
+#
+#     # If no text is extracted, return an empty string
+#     if not article.text:
+#         return ''
+#
+#     # Clean up the text content
+#     article_text = article.text.replace('\n\n', '\n')
+#     article_text = article_text.split('\n')[1:]  # Remove the title
+#
+#     # Add period at the end of each line if not present
+#     article_text = [line + '.' if line and not line.endswith('.') else line for line in article_text]
+#
+#     try:
+#         # Check similarity between the first two lines and remove if similar
+#         similarity = sim(article_text[0], article_text[1])
+#         if similarity >= 0.3:
+#             article_text = article_text[1:]
+#     except Exception:
+#         logging.exception('Ошибка')
+#
+#     # Find and remove the last line containing 'Ранее'
+#     ind = max([i for i, line in enumerate(article_text) if 'Ранее' in line], default=50)
+#     article_text = '\n'.join(line for line in article_text[:ind] if line)  # Join non-empty lines with newline
+#
+#     return article_text
 
-    Parameters:
-        url (str): The URL of the article to parse
-
-    Returns:
-        str: The parsed text content
-
-    """
+def parse_text(url:str) -> str:
     if url is None: return ''
-    article = Article(url, language='ru')  # Create Article object for the given URL
-    article.download()  # Download the article content
-    article.parse()  # Parse the article
-
-    # If no text is extracted, return an empty string
-    if not article.text:
-        return ''
-
-    # Clean up the text content
-    article_text = article.text.replace('\n\n', '\n')
-    article_text = article_text.split('\n')[1:]  # Remove the title
-
-    # Add period at the end of each line if not present
-    article_text = [line + '.' if line and not line.endswith('.') else line for line in article_text]
-
+    text = ''
     try:
-        # Check similarity between the first two lines and remove if similar
-        similarity = sim(article_text[0], article_text[1])
-        if similarity >= 0.3:
-            article_text = article_text[1:]
-    except Exception:
-        logging.exception('Ошибка')
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        # titles = soup.find(class_='topic-body__title').text
+        # image = soup.find(class_='picture__image')['src']
+        content = soup.find_all(class_='topic-body__content-text')
+        text = ''.join([i.text for i in content if "Ранее" not in i.text])
+    except Exception as e:
+        logging.exception('from parse_text')
 
-    # Find and remove the last line containing 'Ранее'
-    ind = max([i for i, line in enumerate(article_text) if 'Ранее' in line], default=50)
-    article_text = '\n'.join(line for line in article_text[:ind] if line)  # Join non-empty lines with newline
+    return text
 
-    return article_text
+
 
 
 def fetch_rss_feed(url) -> None:
     """Download and save RSS feed."""
+    print('Try download and save RSS feed. (def fetch_rss_feed())')
     try:
         with requests.get(url, timeout=5) as response:
             response.raise_for_status()
@@ -112,14 +132,14 @@ def fetch_rss_feed(url) -> None:
         logging.info('Successfully fetched Lenta RSS.')
 
     except Exception:
-        logging.exception(f'from fetch_rss_feed(url)')
+        logging.exception(f'from fetch_rss_feed({url})')
 
 
 def download_image(dq):
     if not dq:
         return
 
-    list_of_files = set(os.listdir("images"))
+    list_of_files = set(os.listdir(PATH_FOR_IMAGES))
     print(f'{list_of_files=}')
     print(len(list_of_files))
     # dif = set([filename.split('/')[-1] for filename in dq]).difference(list_of_files)
@@ -139,7 +159,7 @@ def download_image(dq):
             logging.info(f'Downloading {url}')
             r = requests.get(url, timeout=(5, 10), headers={"User-Agent": "Mozilla/5.0"})
             r.raise_for_status()
-            with open(f'/images/{url.split('/')[-1]}', 'wb') as f:
+            with open(f'{PATH_FOR_IMAGES}{url.split('/')[-1]}', 'wb') as f:
                 f.write(r.content)
                 logging.info(f'Successfully downloaded image.')
             time.sleep(2)
@@ -163,10 +183,10 @@ def process_item(item):
 
         link = item.findtext('link', default='')
         image_url = item.find('enclosure').get('url')
-        IMAGE_LIST.append(image_url)
-        dq.append(image_url)
+        if image_url.endswith('.jpg'):
+            IMAGE_LIST.append(image_url)
+            dq.append(image_url)
         local_image_url = LOCAL_URL + image_url.split('/')[-1]
-        print(f'{local_image_url=}')
         for element in list(item):
             if element.tag in ('author', 'category', 'guid', 'enclosure'):
                 item.remove(element)
@@ -188,6 +208,7 @@ def process_xml_content():
 
     clear_items_dict = {}
     for item in items:
+    # for item in items[10]:
         title = item.findtext('title')
         if item.findtext('category') in ('Путешествия', 'Спорт'):
             continue
