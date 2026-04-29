@@ -107,7 +107,11 @@ def parse_text(url:str) -> str:
     if url is None: return ''
     text = ''
     try:
-        response = requests.get(url)
+        session = requests.Session()
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        response = session.get(url, headers=headers, timeout=30, verify=True)
         soup = BeautifulSoup(response.text, 'html.parser')
         # titles = soup.find(class_='topic-body__title').text
         # image = soup.find(class_='picture__image')['src']
@@ -159,7 +163,8 @@ def download_image(dq):
             logging.info(f'Downloading {url}')
             r = requests.get(url, timeout=(5, 10), headers={"User-Agent": "Mozilla/5.0"})
             r.raise_for_status()
-            with open(f'{PATH_FOR_IMAGES}{url.split('/')[-1]}', 'wb') as f:
+            path = os.path.join(PATH_FOR_IMAGES, url.split('/')[-1])
+            with open(path, 'wb') as f:
                 f.write(r.content)
                 logging.info(f'Successfully downloaded image.')
             time.sleep(2)
