@@ -40,7 +40,7 @@ OUT_URL = 'https://lenta.ru/rss'
 LOCAL_URL = "http://192.168.0.101:5000/images/"
 FALLBACK_URL = LOCAL_URL + "fallback.jpg"
 IMAGE_LIST = []
-PATH_FOR_IMAGES = os.getcwd() + '\\images\\'
+PATH_FOR_IMAGES = os.path.join(os.getcwd(), 'images')
 
 
 from collections import deque
